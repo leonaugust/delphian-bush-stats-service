@@ -29,25 +29,17 @@ public class CryptoPredictionAggregator implements Aggregator<String, String, Cu
     @SneakyThrows
     @Override
     public CurrencyStats apply(String key, String value, CurrencyStats aggregate) {
-        if (key.contains(NEWS)) {
+        if (value.contains("kind") && value.contains("domain")) { // Define if it's CryptoNews class by checking if it has fields unique to CryptoNews
             CryptoNews cryptoNews = objectMapper.readValue(value, CryptoNews.class);
             aggregate.addNews(cryptoNews);
             log.error("CryptoNews was added {}", cryptoNews.getSlug());
-        } else if (key.contains(RATES)) {
+        } else {
             ExchangeRate exchangeRate = objectMapper.readValue(value, ExchangeRate.class);
             aggregate.addRates(exchangeRate);
             log.error("ExchangeRate was added {}", exchangeRate.getAssetIdQuote());
         }
 
-//        Map<String, String> keyProperties = Arrays.stream(key.split(","))
-//                .map(k -> k.replaceAll("\"", ""))
-//                .map(k -> k.replaceAll("\\{", ""))
-//                .map(k -> k.replaceAll("\\}", ""))
-//                .map(s -> s.split(":"))
-//                .collect(Collectors.toMap(s -> s[0], s -> s[1]));
-//        aggregate.setCurrency(keyProperties.get(CURRENCY));
-
-        aggregate.setCurrency(key);
+        aggregate.setCurrency(key.split("-")[0]);
         return aggregate;
     }
 

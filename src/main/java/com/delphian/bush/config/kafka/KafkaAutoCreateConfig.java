@@ -18,6 +18,32 @@ public class KafkaAutoCreateConfig {
         return TopicBuilder.name(kafkaProperties.getStatsTopic())
                 .partitions(kafkaProperties.getPartitions())
                 .replicas(kafkaProperties.getReplicas())
+                .compact()
+                .build();
+    }
+
+    @Bean
+    public NewTopic currencyStatsIntermediate() {
+        return TopicBuilder.name("currency-stats-intermediate")
+                .partitions(kafkaProperties.getPartitions())
+                .replicas(kafkaProperties.getReplicas())
+                .compact()
+                .build();
+    }
+
+    @Bean
+    public NewTopic ratesIntermediate() {
+        return TopicBuilder.name("exchange-rates-intermediate")
+                .partitions(kafkaProperties.getPartitions())
+                .replicas(kafkaProperties.getReplicas())
+                .build();
+    }
+
+    @Bean
+    public NewTopic newsIntermediate() {
+        return TopicBuilder.name("news-intermediate")
+                .partitions(kafkaProperties.getPartitions())
+                .replicas(kafkaProperties.getReplicas())
                 .build();
     }
 
