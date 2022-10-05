@@ -19,6 +19,9 @@ public class KafkaProperties {
     private String exchangeRatesTopic;
     private int partitions;
     private int replicas;
+    private String applicationId;
+
+    private String autoOffsetReset;
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
