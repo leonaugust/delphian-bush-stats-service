@@ -1,4 +1,4 @@
-package com.delphian.bush.service.aggregator;
+package com.delphian.bush.service.impl;
 
 import com.delphian.bush.dto.stats.CurrencyStats;
 import com.delphian.bush.dto.exchange_rates.ExchangeRate;
@@ -20,11 +20,6 @@ public class CryptoPredictionAggregator implements Aggregator<String, String, Cu
     public CryptoPredictionAggregator(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
-
-    private static final String NEWS = "news";
-    private static final String RATES = "exchange-rates";
-
-    private static final String CURRENCY = "currency";
 
     @SneakyThrows
     @Override

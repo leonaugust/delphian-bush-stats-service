@@ -1,9 +1,10 @@
-package com.delphian.bush.service.aggregator;
+package com.delphian.bush.service.impl;
 
 import com.delphian.bush.config.kafka.KafkaProperties;
 import com.delphian.bush.dto.news.CryptoNews;
 import com.delphian.bush.dto.news.Currency;
 import com.delphian.bush.dto.stats.CurrencyStats;
+import com.delphian.bush.service.KafkaStreamsService;
 import com.delphian.bush.util.TimeUtil;
 import com.delphian.bush.util.json.serdes.CustomSerdes;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -13,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,14 +24,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @Profile("kafka")
-public class KafkaStreamsServiceImpl {
+public class KafkaStreamsServiceImpl implements KafkaStreamsService {
     private final KafkaProperties kafkaProperties;
     private final ObjectMapper objectMapper;
 
