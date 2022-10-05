@@ -9,7 +9,6 @@ import org.springframework.kafka.config.TopicBuilder;
 
 @Configuration
 @RequiredArgsConstructor
-@Profile("kafka")
 public class KafkaAutoCreateConfig {
     private final KafkaProperties kafkaProperties;
 

@@ -8,7 +8,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableFeignClients
 @EnableScheduling
-//@EnableMongoRepositories
 public class StatsServiceApplication {
 
     public static void main(String[] args) {

@@ -2,7 +2,7 @@ package com.delphian.bush.util.schema;
 
 import com.delphian.bush.dto.news.Currency;
 import com.delphian.bush.util.converter.ConnectPOJOConverter;
-import com.delphian.bush.util.converter.CurrencyConverter;
+import com.delphian.bush.util.converter.impl.CurrencyConverter;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 

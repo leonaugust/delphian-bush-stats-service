@@ -1,8 +1,8 @@
-package com.delphian.bush.util.converter;
+package com.delphian.bush.util.converter.impl;
 
 import com.delphian.bush.dto.news.NewsSource;
+import com.delphian.bush.util.converter.ConnectPOJOConverter;
 import com.delphian.bush.util.schema.NewsSourceSchema;
-import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
 
 public class NewsSourceConverter implements ConnectPOJOConverter<NewsSource> {

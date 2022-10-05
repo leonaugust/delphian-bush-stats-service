@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Profile("kafka")
 public class KafkaStreamsServiceImpl implements KafkaStreamsService {
     private final KafkaProperties kafkaProperties;
     private final ObjectMapper objectMapper;

@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Profile;
 @ConfigurationProperties(prefix = "predictor.kafka")
 @Getter
 @Setter
-@Profile("kafka")
 public class KafkaProperties {
 
     private String statsTopic;
@@ -20,9 +19,7 @@ public class KafkaProperties {
     private int partitions;
     private int replicas;
     private String applicationId;
-
     private String autoOffsetReset;
-
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 

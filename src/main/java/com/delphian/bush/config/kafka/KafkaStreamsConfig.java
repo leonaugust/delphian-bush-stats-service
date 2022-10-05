@@ -18,7 +18,6 @@ import java.util.Map;
 @Configuration
 @EnableKafkaStreams
 @RequiredArgsConstructor
-@Profile("kafka")
 public class KafkaStreamsConfig {
     private final KafkaProperties properties;
 

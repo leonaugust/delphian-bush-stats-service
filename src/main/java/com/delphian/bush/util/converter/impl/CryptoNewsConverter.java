@@ -1,7 +1,8 @@
-package com.delphian.bush.util.converter;
+package com.delphian.bush.util.converter.impl;
 
 import com.delphian.bush.dto.news.CryptoNews;
 import com.delphian.bush.dto.news.Currency;
+import com.delphian.bush.util.converter.ConnectPOJOConverter;
 import com.delphian.bush.util.schema.CryptoNewsSchema;
 import com.delphian.bush.util.schema.CurrencySchema;
 import com.delphian.bush.util.schema.NewsSourceSchema;

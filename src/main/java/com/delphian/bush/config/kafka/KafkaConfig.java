@@ -6,6 +6,5 @@ import org.springframework.kafka.annotation.EnableKafka;
 
 @Configuration
 @EnableKafka
-@Profile("kafka")
 public class KafkaConfig {
 }

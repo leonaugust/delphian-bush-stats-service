@@ -17,14 +17,37 @@
         <java.version>11</java.version>
         <spring-cloud.version>2021.0.0</spring-cloud.version>
         <lombok.version>1.18.22</lombok.version>
-        <kafka.connect.version>3.2.0</kafka.connect.version>
         <mapstruct.version>1.4.2.Final</mapstruct.version>
+        <spring-web-flux.version>2.6.9</spring-web-flux.version>
+        <maven-compiler-plugin.version>3.5.1</maven-compiler-plugin.version>
+        <spring-boot-starter-test.version>2.6.9</spring-boot-starter-test.version>
+        <reactor-test.version>3.4.19</reactor-test.version>
+        <spring-cloud-starter-openfeign.version>3.1.0</spring-cloud-starter-openfeign.version>
+        <springdoc-openapi-webflux-ui.version>1.6.4</springdoc-openapi-webflux-ui.version>
+        <reactor-kafka.version>1.3.11</reactor-kafka.version>
+        <spring-kafka.version>2.8.7</spring-kafka.version>
+        <spring-kafka-test.version>2.8.7</spring-kafka-test.version>
+        <kafka.connect.version>3.2.0</kafka.connect.version>
+        <gson.version>2.8.7</gson.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
+            <version>${spring-web-flux.version}</version>
         </dependency>
 
         <dependency>
@@ -42,38 +65,44 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring-boot-starter-test.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
+            <version>${reactor-test.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka-test</artifactId>
             <scope>test</scope>
+            <version>${spring-kafka-test.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <version>${spring-cloud-starter-openfeign.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-webflux-ui</artifactId>
-            <version>1.6.4</version>
+            <version>${springdoc-openapi-webflux-ui.version}</version>
         </dependency>
 
         <dependency>
             <groupId>io.projectreactor.kafka</groupId>
             <artifactId>reactor-kafka</artifactId>
+            <version>${reactor-kafka.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
+            <version>${spring-kafka.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -82,7 +111,7 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.7</version>
+            <version>${gson.version}</version>
         </dependency>
 
         <dependency>
@@ -94,17 +123,6 @@
 
     </dependencies>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <build>
         <plugins>
             <plugin>
@@ -123,7 +141,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -136,7 +154,7 @@
                         <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
-                            <version>1.4.2.Final</version>
+                            <version>${mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
