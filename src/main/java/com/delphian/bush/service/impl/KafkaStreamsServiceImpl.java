@@ -15,7 +15,6 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -108,7 +107,7 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
         KGroupedStream<String, String> newsToday = streamsBuilder.stream("news-intermediate", Consumed.with(Serdes.String(), Serdes.String()))
                 .groupByKey();
 //
-        Aggregator<String, String, CurrencyStats> predictorAggregator = new CryptoPredictionAggregator(objectMapper);
+        Aggregator<String, String, CurrencyStats> predictorAggregator = new CryptoStatsAggregator(objectMapper);
         KStream<String, CurrencyStats> stats = newsToday.cogroup(predictorAggregator)
                 .cogroup(ratesToday, predictorAggregator)
                 .aggregate(CurrencyStats::new, Materialized.with(Serdes.String(), CustomSerdes.CryptoPrediction())).toStream();

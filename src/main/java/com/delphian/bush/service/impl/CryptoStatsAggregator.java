@@ -6,18 +6,13 @@ import com.delphian.bush.dto.news.CryptoNews;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.streams.kstream.Aggregator;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @Slf4j
-public class CryptoPredictionAggregator implements Aggregator<String, String, CurrencyStats> {
+public class CryptoStatsAggregator implements Aggregator<String, String, CurrencyStats> {
 
     private final ObjectMapper objectMapper;
-    public CryptoPredictionAggregator(ObjectMapper objectMapper) {
+    public CryptoStatsAggregator(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
