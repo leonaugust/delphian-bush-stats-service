@@ -16,6 +16,9 @@ public class KafkaProperties {
     private String statsTopic;
     private String newsTopic;
     private String exchangeRatesTopic;
+    private String currencyStatsIntermediateTopic;
+    private String newsIntermediateTopic;
+    private String exchangeRatesIntermediateTopic;
     private int partitions;
     private int replicas;
     private String applicationId;

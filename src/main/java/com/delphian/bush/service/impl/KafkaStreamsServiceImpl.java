@@ -52,7 +52,7 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
                     } catch (Exception e) {
                         return null;
                     }
-                }).to("exchange-rates-intermediate"); // Intermediate topic as workaround for issue https://issues.apache.org/jira/browse/KAFKA-10659
+                }).to(kafkaProperties.getExchangeRatesIntermediateTopic()); // Intermediate topic as workaround for issue https://issues.apache.org/jira/browse/KAFKA-10659
 
 
         streamsBuilder.stream(kafkaProperties.getNewsTopic(), Consumed.with(Serdes.String(), Serdes.String()))
@@ -99,23 +99,22 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
                         return null;
                     }
                 })
-                .to("news-intermediate"); // Intermediate topic as workaround for issue https://issues.apache.org/jira/browse/KAFKA-10659
-
-        KGroupedStream<String, String> ratesToday = streamsBuilder.stream("exchange-rates-intermediate", Consumed.with(Serdes.String(), Serdes.String()))
-                .groupByKey();
-
-        KGroupedStream<String, String> newsToday = streamsBuilder.stream("news-intermediate", Consumed.with(Serdes.String(), Serdes.String()))
-                .groupByKey();
+                .to(kafkaProperties.getNewsIntermediateTopic()); // Intermediate topic as workaround for issue https://issues.apache.org/jira/browse/KAFKA-10659
 //
+        KGroupedStream<String, String> ratesToday = streamsBuilder.stream(kafkaProperties.getExchangeRatesIntermediateTopic(), Consumed.with(Serdes.String(), Serdes.String()))
+                .groupByKey();
+
+        KGroupedStream<String, String> newsToday = streamsBuilder.stream(kafkaProperties.getNewsIntermediateTopic(), Consumed.with(Serdes.String(), Serdes.String()))
+                .groupByKey();
         Aggregator<String, String, CurrencyStats> predictorAggregator = new CryptoStatsAggregator(objectMapper);
         KStream<String, CurrencyStats> stats = newsToday.cogroup(predictorAggregator)
                 .cogroup(ratesToday, predictorAggregator)
                 .aggregate(CurrencyStats::new, Materialized.with(Serdes.String(), CustomSerdes.CryptoPrediction())).toStream();
 
         stats.print(Printed.toSysOut());
-        stats.to("currency-stats-intermediate");
+        stats.to(kafkaProperties.getCurrencyStatsIntermediateTopic());
 
-        KTable<String, CurrencyStats> table = streamsBuilder.table("currency-stats-intermediate",
+        KTable<String, CurrencyStats> table = streamsBuilder.table(kafkaProperties.getCurrencyStatsIntermediateTopic(),
                 Materialized.with(Serdes.String(), CustomSerdes.CryptoPrediction()));
 
         table.toStream().to(kafkaProperties.getStatsTopic());
