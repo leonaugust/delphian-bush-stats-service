@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,8 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
         },
         topics = {"stats", "news", "exchange-rates", "exchange-rates-intermediate",
                 "news-intermediate", "currency-stats-intermediate"
-        },
-        controlledShutdown = false
+        }
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class KafkaStreamsServiceImplTest {
@@ -48,8 +48,11 @@ class KafkaStreamsServiceImplTest {
     @Autowired
     private KafkaProperties kafkaProperties;
 
-    @Autowired
-    private ApplicationContext applicationContext;
+    @BeforeAll
+    public static void cleanKStreamsContext(ApplicationContext applicationContext) {
+        StreamsBuilderFactoryBean streamsBuilderFactory = applicationContext.getBean(StreamsBuilderFactoryBean.class);
+        streamsBuilderFactory.setCleanupConfig(new CleanupConfig(true, true));
+    }
 
     @Autowired
     @SuppressWarnings(value = "all")
@@ -71,10 +74,7 @@ class KafkaStreamsServiceImplTest {
     private static final String ID_FIELD = "id";
 
     @Test
-    public void processInformationTest() throws JsonProcessingException, InterruptedException {
-        StreamsBuilderFactoryBean streamsBuilderFactory = applicationContext.getBean(StreamsBuilderFactoryBean.class);
-        streamsBuilderFactory.setCleanupConfig(new CleanupConfig(true, true));
-
+    public void processInformationShibaStatsGeneratedTest() throws JsonProcessingException, InterruptedException {
         ExchangeRate exchangeRate = new ExchangeRate();
         exchangeRate.setRate("10");
         exchangeRate.setAssetIdQuote("SHIB");
