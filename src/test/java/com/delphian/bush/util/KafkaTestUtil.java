@@ -6,6 +6,7 @@ import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -55,6 +56,13 @@ public class KafkaTestUtil {
         ConsumerRecord<Object, Object> singleRecord = KafkaTestUtils.getSingleRecord(consumer, topic);
         consumer.close();
         return singleRecord;
+    }
+
+    public Iterable<ConsumerRecord<Object, Object>> receiveRecords(String topic) {
+        Consumer<Object, Object> consumer = getConsumer(embeddedKafkaBroker, topic);
+        ConsumerRecords<Object, Object> records = KafkaTestUtils.getRecords(consumer, 100000L);
+        consumer.close();
+        return records.records(topic);
     }
 
     @SneakyThrows

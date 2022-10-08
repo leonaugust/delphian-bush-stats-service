@@ -21,6 +21,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
@@ -35,6 +38,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class KafkaStreamsServiceImplTest {
 
+    public static final String SHIB = "SHIB";
+    public static final String BTC = "BTC";
     @Autowired
     private KafkaProperties kafkaProperties;
 
@@ -57,10 +62,9 @@ class KafkaStreamsServiceImplTest {
 
     @Test
     public void processInformationShibaStatsGeneratedTest() throws JsonProcessingException {
-        ExchangeRate exchangeRate = ExchangeRateTestUtil.mockRate("SHIB");
+        ExchangeRate exchangeRate = ExchangeRateTestUtil.mockRate(SHIB);
         kafkaTestUtil.send(exchangeRate);
-
-        CryptoNews cryptoNews = CryptoNewsTestUtil.mockNews("SHIB",
+        CryptoNews cryptoNews = CryptoNewsTestUtil.mockNews(SHIB,
                 "Top-crypto-projects-that-are-actually-trying-to-do-better-for-the-world");
         kafkaTestUtil.send(cryptoNews);
 
@@ -68,6 +72,34 @@ class KafkaStreamsServiceImplTest {
         CurrencyStats currencyStats = objectMapper.readValue((String) singleRecord.value(), CurrencyStats.class);
         assertEquals(1, currencyStats.getNews().size());
         assertEquals(1, currencyStats.getRates().size());
+    }
+
+    @Test
+    public void processInformationMultipleStatsGeneratedTest() throws JsonProcessingException {
+        ExchangeRate exchangeRate = ExchangeRateTestUtil.mockRate(SHIB);
+        kafkaTestUtil.send(exchangeRate);
+        CryptoNews cryptoNews = CryptoNewsTestUtil.mockNews(SHIB,
+                "Top-crypto-projects-that-are-actually-trying-to-do-better-for-the-world");
+        kafkaTestUtil.send(cryptoNews);
+
+        ExchangeRate btcRate = ExchangeRateTestUtil.mockRate(BTC);
+        kafkaTestUtil.send(btcRate);
+        CryptoNews newsBtc = CryptoNewsTestUtil.mockNews(BTC,
+                "Something about BTC");
+        kafkaTestUtil.send(newsBtc);
+
+        Iterable<ConsumerRecord<Object, Object>> consumerRecords = kafkaTestUtil.receiveRecords(kafkaProperties.getStatsTopic());
+        Map<String, CurrencyStats> statsByCurrency = new HashMap<>();
+        for (ConsumerRecord<Object, Object> consumerRecord : consumerRecords) {
+            CurrencyStats currencyStats = objectMapper.readValue((String) consumerRecord.value(), CurrencyStats.class);
+            statsByCurrency.put(currencyStats.getCurrency(), currencyStats);
+        }
+
+        assertEquals(2, statsByCurrency.values().size());
+        statsByCurrency.values().forEach(s -> {
+            assertEquals(1, s.getNews().size());
+            assertEquals(1, s.getRates().size());
+        });
     }
 
 
