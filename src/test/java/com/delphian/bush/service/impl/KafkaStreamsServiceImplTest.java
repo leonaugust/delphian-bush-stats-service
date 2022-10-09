@@ -73,7 +73,7 @@ class KafkaStreamsServiceImplTest {
         assertEquals(1, currencyStats.getNews().size());
         assertEquals(1, currencyStats.getRates().size());
 
-
+        assertEquals(SHIB, currencyStats.getCurrency());
         assertEquals(rateShib.getRate(), new ArrayList<>(currencyStats.getRates()).get(0).getRate());
         assertEquals(newsShib.getSlug(), new ArrayList<>(currencyStats.getNews()).get(0).getSlug());
     }
@@ -101,6 +101,10 @@ class KafkaStreamsServiceImplTest {
         assertEquals(rateShib.getRate(), new ArrayList<>(statsByCurrency.get(SHIB).getRates()).get(0).getRate());
         assertEquals(newsBtc.getSlug(), new ArrayList<>(statsByCurrency.get(BTC).getNews()).get(0).getSlug());
         assertEquals(newsShib.getSlug(), new ArrayList<>(statsByCurrency.get(SHIB).getNews()).get(0).getSlug());
+
+
+        assertEquals(SHIB, statsByCurrency.get(SHIB).getCurrency());
+        assertEquals(BTC, statsByCurrency.get(BTC).getCurrency());
 
         assertEquals(2, statsByCurrency.values().size());
         statsByCurrency.values().forEach(s -> {

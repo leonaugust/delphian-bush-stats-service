@@ -19,17 +19,19 @@ public class CryptoStatsAggregator implements Aggregator<String, String, Currenc
     @SneakyThrows
     @Override
     public CurrencyStats apply(String key, String value, CurrencyStats aggregate) {
+        if (aggregate.getCurrency() == null) {
+            aggregate.setCurrency(key.split("-")[0]);
+        }
+
         if (value.contains("kind") && value.contains("domain")) { // Define if it's CryptoNews class by checking if it has fields unique to CryptoNews
             CryptoNews cryptoNews = objectMapper.readValue(value, CryptoNews.class);
             aggregate.addNews(cryptoNews);
-            log.error("CryptoNews was added {}", cryptoNews.getSlug());
+            log.debug("CryptoNews was added {}", cryptoNews.getSlug());
         } else {
             ExchangeRate exchangeRate = objectMapper.readValue(value, ExchangeRate.class);
             aggregate.addRates(exchangeRate);
-            log.error("ExchangeRate was added {}", exchangeRate.getAssetIdQuote());
+            log.debug("ExchangeRate was added {}", exchangeRate.getAssetIdQuote());
         }
-
-        aggregate.setCurrency(key.split("-")[0]);
         return aggregate;
     }
 
