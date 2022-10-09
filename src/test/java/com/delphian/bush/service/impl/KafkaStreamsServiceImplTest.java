@@ -21,13 +21,17 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @EmbeddedKafka(partitions = 1,
         brokerProperties = {
                 "listeners=PLAINTEXT://localhost:9092", "port=9092"
@@ -63,7 +67,7 @@ class KafkaStreamsServiceImplTest {
 
     @Test
     public void processShibaStatsGeneratedTest() throws JsonProcessingException {
-        ExchangeRate rateShib = ExchangeRateTestUtil.mockRate(SHIB);
+        ExchangeRate rateShib = ExchangeRateTestUtil.mockRate(SHIB, LocalDateTime.now().toString());
         kafkaTestUtil.send(rateShib);
         CryptoNews newsShib = CryptoNewsTestUtil.mockNews(SHIB, "Top-crypto-projects-that-are-actually-trying-to-do-better-for-the-world");
         kafkaTestUtil.send(newsShib);
@@ -80,12 +84,12 @@ class KafkaStreamsServiceImplTest {
 
     @Test
     public void processMultipleStatsGeneratedTest() throws JsonProcessingException {
-        ExchangeRate rateShib = ExchangeRateTestUtil.mockRate(SHIB);
+        ExchangeRate rateShib = ExchangeRateTestUtil.mockRate(SHIB, LocalDateTime.now().toString());
         kafkaTestUtil.send(rateShib);
         CryptoNews newsShib = CryptoNewsTestUtil.mockNews(SHIB, "Top-crypto-projects-that-are-actually-trying-to-do-better-for-the-world");
         kafkaTestUtil.send(newsShib);
 
-        ExchangeRate rateBtc = ExchangeRateTestUtil.mockRate(BTC);
+        ExchangeRate rateBtc = ExchangeRateTestUtil.mockRate(BTC, LocalDateTime.now().toString());
         kafkaTestUtil.send(rateBtc);
         CryptoNews newsBtc = CryptoNewsTestUtil.mockNews(BTC, "Something about BTC");
         kafkaTestUtil.send(newsBtc);
@@ -111,6 +115,41 @@ class KafkaStreamsServiceImplTest {
             assertEquals(1, s.getNews().size());
             assertEquals(1, s.getRates().size());
         });
+    }
+
+    @Test
+    public void processMultipleBTCRatesTest() throws JsonProcessingException {
+        ExchangeRate rateShib = ExchangeRateTestUtil.mockRate(SHIB, LocalDateTime.now().toString());
+        kafkaTestUtil.send(rateShib);
+        CryptoNews newsShib = CryptoNewsTestUtil.mockNews(SHIB, "Top-crypto-projects-that-are-actually-trying-to-do-better-for-the-world");
+        kafkaTestUtil.send(newsShib);
+
+        ExchangeRate rateBtcNow = ExchangeRateTestUtil.mockRate(BTC, LocalDateTime.now().toString());
+        kafkaTestUtil.send(rateBtcNow);
+        CryptoNews newsBtc = CryptoNewsTestUtil.mockNews(BTC, "Something about BTC");
+        kafkaTestUtil.send(newsBtc);
+
+        ExchangeRate rateBtcLater = ExchangeRateTestUtil.mockRate(BTC, LocalDateTime.now().plusSeconds(10).toString());
+        kafkaTestUtil.send(rateBtcLater);
+
+        Iterable<ConsumerRecord<Object, Object>> consumerRecords = kafkaTestUtil.receiveRecords(kafkaProperties.getStatsTopic());
+        Map<String, CurrencyStats> statsByCurrency = new HashMap<>();
+        for (ConsumerRecord<Object, Object> consumerRecord : consumerRecords) {
+            CurrencyStats currencyStats = objectMapper.readValue((String) consumerRecord.value(), CurrencyStats.class);
+            statsByCurrency.put(currencyStats.getCurrency(), currencyStats);
+        }
+
+
+        List<String> expectedRates = List.of(rateBtcNow.getRate(), rateBtcLater.getRate());
+        assertTrue(expectedRates.containsAll(
+                statsByCurrency.get(BTC).getRates().stream().map(ExchangeRate::getRate).collect(Collectors.toList()))
+        );
+
+        assertEquals(rateShib.getRate(), new ArrayList<>(statsByCurrency.get(SHIB).getRates()).get(0).getRate());
+        assertEquals(newsShib.getSlug(), new ArrayList<>(statsByCurrency.get(SHIB).getNews()).get(0).getSlug());
+        assertEquals(SHIB, statsByCurrency.get(SHIB).getCurrency());
+
+        assertEquals(2, statsByCurrency.values().size());
     }
 
 
