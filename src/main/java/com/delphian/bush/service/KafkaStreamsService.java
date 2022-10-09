@@ -5,6 +5,6 @@ import org.apache.kafka.streams.StreamsBuilder;
 public interface KafkaStreamsService {
 
     @SuppressWarnings("unused")
-    void processInformation(StreamsBuilder streamsBuilder);
+    void process(StreamsBuilder streamsBuilder);
 
 }

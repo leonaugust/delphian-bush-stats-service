@@ -33,7 +33,7 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public void processInformation(StreamsBuilder streamsBuilder) {
+    public void process(StreamsBuilder streamsBuilder) {
         streamsBuilder.stream(kafkaProperties.getExchangeRatesTopic(), Consumed.with(Serdes.String(), Serdes.String()))
                 .filter((key, val) -> {
                     try {
