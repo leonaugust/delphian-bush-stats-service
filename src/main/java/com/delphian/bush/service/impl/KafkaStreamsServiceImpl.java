@@ -5,7 +5,6 @@ import com.delphian.bush.dto.news.CryptoNews;
 import com.delphian.bush.dto.news.Currency;
 import com.delphian.bush.dto.stats.CurrencyStats;
 import com.delphian.bush.service.KafkaStreamsService;
-import com.delphian.bush.util.TimeUtil;
 import com.delphian.bush.util.json.serdes.CustomSerdes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.delphian.bush.util.KafkaUtil.isTodayPredicate;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -34,37 +35,34 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
 
     @Autowired
     public void process(StreamsBuilder streamsBuilder) {
-        streamsBuilder.stream(kafkaProperties.getExchangeRatesTopic(), Consumed.with(Serdes.String(), Serdes.String()))
-                .filter((key, val) -> {
-                    try {
-                        Map<String, String> keyProperties = new ObjectMapper().readValue(key, HashMap.class);
-                        return TimeUtil.nowFormatted().getDayOfYear() == LocalDateTime.parse(keyProperties.get("date")).getDayOfYear();
-                    } catch (Exception e) {
-                        return false;
-                    }
+        filterRatesTodayAndSelectKeyPushToIntermediateTopic(streamsBuilder);
+        filterNewsTodayAndSelectKeyPushToIntermediateTopic(streamsBuilder);
 
-                })
-                .selectKey((key, val) -> {
-                    try {
-                        Map<String, String> keyProperties = new ObjectMapper().readValue(key, HashMap.class);
-                        return keyProperties.get("asset_id_quote") +
-                                "-" + LocalDateTime.parse(keyProperties.get("date")).toLocalDate();
-                    } catch (Exception e) {
-                        return null;
-                    }
-                }).to(kafkaProperties.getExchangeRatesIntermediateTopic()); // Intermediate topic as workaround for issue https://issues.apache.org/jira/browse/KAFKA-10659
+        aggregateRatesAndNews(streamsBuilder);
+        KTable<String, CurrencyStats> table = streamsBuilder.table(kafkaProperties.getCurrencyStatsIntermediateTopic(),
+                Materialized.with(Serdes.String(), CustomSerdes.CryptoPrediction()));
 
+        table.toStream().to(kafkaProperties.getStatsTopic());
+    }
+
+    private void aggregateRatesAndNews(StreamsBuilder streamsBuilder) {
+        KGroupedStream<String, String> ratesToday = streamsBuilder.stream(kafkaProperties.getExchangeRatesIntermediateTopic(), Consumed.with(Serdes.String(), Serdes.String()))
+                .groupByKey();
+
+        KGroupedStream<String, String> newsToday = streamsBuilder.stream(kafkaProperties.getNewsIntermediateTopic(), Consumed.with(Serdes.String(), Serdes.String()))
+                .groupByKey();
+        Aggregator<String, String, CurrencyStats> predictorAggregator = new CryptoStatsAggregator(objectMapper);
+        newsToday.cogroup(predictorAggregator)
+                .cogroup(ratesToday, predictorAggregator)
+                .aggregate(CurrencyStats::new, Materialized.with(Serdes.String(), CustomSerdes.CryptoPrediction())).toStream()
+        .to(kafkaProperties.getCurrencyStatsIntermediateTopic());
+    }
+
+    @SuppressWarnings("unchecked")
+    private void filterNewsTodayAndSelectKeyPushToIntermediateTopic(StreamsBuilder streamsBuilder) {
 
         streamsBuilder.stream(kafkaProperties.getNewsTopic(), Consumed.with(Serdes.String(), Serdes.String()))
-                .filter((key, val) -> {
-                    try {
-                        Map<String, String> keyProperties = new ObjectMapper().readValue(key, HashMap.class);
-                        return TimeUtil.nowFormatted().getDayOfYear() == LocalDateTime.parse(keyProperties.get("date")).getDayOfYear();
-                    } catch (Exception e) {
-                        return false;
-                    }
-
-                })
+                .filter(isTodayPredicate())
                 .flatMapValues(value -> {
                     try {
                         final CryptoNews cryptoNews = objectMapper.readValue(value, CryptoNews.class);
@@ -74,9 +72,8 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
                         }
 
                         return currencies.stream().map(cur -> {
-                                    CryptoNews singleCurrencyNews = cryptoNews;
-                                    singleCurrencyNews.setCurrencies(List.of(cur));
-                                    return singleCurrencyNews;
+                                    cryptoNews.setCurrencies(List.of(cur));
+                                    return cryptoNews;
                                 }).map(news -> {
                                     try {
                                         return new ObjectMapper().writeValueAsString(news);
@@ -92,7 +89,7 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
                 .selectKey((key, val) -> {
                     try {
                         final CryptoNews cryptoNews = objectMapper.readValue(val, CryptoNews.class);
-                        Map<String, String> keyProperties = new ObjectMapper().readValue(key, HashMap.class);
+                        Map<String, String> keyProperties = objectMapper.readValue(key, HashMap.class);
                         return cryptoNews.getCurrencies().get(0).getCode() +
                                 "-" + LocalDateTime.parse(keyProperties.get("date")).toLocalDate();
                     } catch (Exception e) {
@@ -100,24 +97,21 @@ public class KafkaStreamsServiceImpl implements KafkaStreamsService {
                     }
                 })
                 .to(kafkaProperties.getNewsIntermediateTopic()); // Intermediate topic as workaround for issue https://issues.apache.org/jira/browse/KAFKA-10659
-//
-        KGroupedStream<String, String> ratesToday = streamsBuilder.stream(kafkaProperties.getExchangeRatesIntermediateTopic(), Consumed.with(Serdes.String(), Serdes.String()))
-                .groupByKey();
+    }
 
-        KGroupedStream<String, String> newsToday = streamsBuilder.stream(kafkaProperties.getNewsIntermediateTopic(), Consumed.with(Serdes.String(), Serdes.String()))
-                .groupByKey();
-        Aggregator<String, String, CurrencyStats> predictorAggregator = new CryptoStatsAggregator(objectMapper);
-        KStream<String, CurrencyStats> stats = newsToday.cogroup(predictorAggregator)
-                .cogroup(ratesToday, predictorAggregator)
-                .aggregate(CurrencyStats::new, Materialized.with(Serdes.String(), CustomSerdes.CryptoPrediction())).toStream();
-
-        stats.print(Printed.toSysOut());
-        stats.to(kafkaProperties.getCurrencyStatsIntermediateTopic());
-
-        KTable<String, CurrencyStats> table = streamsBuilder.table(kafkaProperties.getCurrencyStatsIntermediateTopic(),
-                Materialized.with(Serdes.String(), CustomSerdes.CryptoPrediction()));
-
-        table.toStream().to(kafkaProperties.getStatsTopic());
+    @SuppressWarnings("unchecked")
+    private void filterRatesTodayAndSelectKeyPushToIntermediateTopic(StreamsBuilder streamsBuilder) {
+        streamsBuilder.stream(kafkaProperties.getExchangeRatesTopic(), Consumed.with(Serdes.String(), Serdes.String()))
+                .filter(isTodayPredicate())
+                .selectKey((key, val) -> {
+                    try {
+                        Map<String, String> keyProperties = objectMapper.readValue(key, HashMap.class);
+                        return keyProperties.get("asset_id_quote") +
+                                "-" + LocalDateTime.parse(keyProperties.get("date")).toLocalDate();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage());
+                    }
+                }).to(kafkaProperties.getExchangeRatesIntermediateTopic()); // Intermediate topic as workaround for issue https://issues.apache.org/jira/browse/KAFKA-10659
     }
 
 
