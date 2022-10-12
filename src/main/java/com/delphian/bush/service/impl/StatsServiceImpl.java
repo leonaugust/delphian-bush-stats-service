@@ -38,12 +38,12 @@ public class StatsServiceImpl implements StatsService {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, kafkaProperties.getAutoOffsetReset());
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, true);
 
-        DefaultKafkaReceiver kafkaReceiver = new DefaultKafkaReceiver(
-                ConsumerFactory.INSTANCE, ReceiverOptions.create(props)
+        DefaultKafkaReceiver<String, CurrencyStats> kafkaReceiver = new DefaultKafkaReceiver<String, CurrencyStats>(
+                ConsumerFactory.INSTANCE, ReceiverOptions.<String, CurrencyStats>create(props)
                 .subscription(Collections.singleton(kafkaProperties.getStatsTopic()))
         );
 
-        Flux<ReceiverRecord<String, CurrencyStats>> receive = kafkaReceiver.receive(200);
+        Flux<ReceiverRecord<String, CurrencyStats>> receive = kafkaReceiver.receive();
 
         return receive.checkpoint("Messages being consumed")
                 .log()
