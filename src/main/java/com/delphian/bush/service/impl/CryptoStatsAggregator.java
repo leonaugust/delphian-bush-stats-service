@@ -23,7 +23,7 @@ public class CryptoStatsAggregator implements Aggregator<String, String, Currenc
             aggregate.setCurrency(key.split("-")[0]);
         }
 
-        if (value.contains("kind") && value.contains("domain")) { // Define if it's CryptoNews class by checking if it has fields unique to CryptoNews
+        if (value.contains("kind") && value.contains("domain")) { // Define which class it is
             CryptoNews cryptoNews = objectMapper.readValue(value, CryptoNews.class);
             aggregate.addNews(cryptoNews);
             log.debug("CryptoNews was added {}", cryptoNews.getSlug());
